@@ -2,10 +2,16 @@
 
 **Your daily digital fingerprint — generated from mouse movement.**
 
+> **中文版本：[README.zh.md](README.zh.md)**
+
 MotionPrint runs quietly in your system tray, recording mouse position, clicks, and scrolls. At the end of each day, it transforms your activity into a unique piece of generative art. Think of it as a personal "mouse canvas" — every day produces a different fingerprint.
 
 <p align="center">
-  <em>Screenshots: place your exported PNGs in <code>assets/screenshots/</code></em>
+  <img src="assets/screenshots/demo-terrain.png" width="280" alt="Terrain Theme" />
+  <img src="assets/screenshots/demo-ink.png" width="280" alt="Ink Wash Theme" />
+  <img src="assets/screenshots/demo-neon.png" width="280" alt="Neon Theme" />
+  <br>
+  <em>Terrain · Ink Wash · Neon — three artistic themes</em>
 </p>
 
 ---

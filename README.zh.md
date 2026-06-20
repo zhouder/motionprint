@@ -2,10 +2,16 @@
 
 **你的每日数字指纹——由鼠标轨迹生成的艺术作品。**
 
+> **English version: [README.md](README.md)**
+
 MotionPrint 静静地在系统托盘中运行，记录鼠标位置、点击和滚动。每天结束时，它会将你的活动转化为一幅独特的生成艺术作品。把它想象成个人的"鼠标画布"——每一天都产生不同的指纹。
 
 <p align="center">
-  <em>截图：将导出的 PNG 放入 <code>assets/screenshots/</code> 目录</em>
+  <img src="assets/screenshots/demo-terrain.png" width="280" alt="地形主题" />
+  <img src="assets/screenshots/demo-ink.png" width="280" alt="墨迹主题" />
+  <img src="assets/screenshots/demo-neon.png" width="280" alt="霓虹主题" />
+  <br>
+  <em>地形 · 墨迹 · 霓虹 — 三种艺术主题</em>
 </p>
 
 ---

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MotionPrint Demo Gallery</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #050508; color: #e8e4dd; font-family: 'Segoe UI', sans-serif; padding: 32px; }
+h1 { font-family: Georgia, serif; font-size: 28px; font-weight: 400; letter-spacing: 0.04em; margin-bottom: 8px; }
+h1 span { color: #c9a96e; font-style: italic; }
+.subtitle { color: #8a857a; font-size: 14px; margin-bottom: 32px; }
+.lang-bar { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; }
+.lang-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #2a2a38; background: #111118; color: #8a857a; cursor: pointer; font-size: 12px; transition: all 0.3s; }
+.lang-btn.active { background: rgba(201,169,110,0.15); border-color: #8b7440; color: #c9a96e; }
+.gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
+.card { background: #0a0a10; border: 1px solid #1e1e2a; border-radius: 12px; overflow: hidden; }
+.card-header { padding: 12px 16px; font-family: Georgia, serif; font-size: 15px; color: #c9a96e; border-bottom: 1px solid #1e1e2a; }
+.card canvas { display: block; width: 100%; aspect-ratio: 16/9; }
+.info { max-width: 800px; margin-top: 24px; padding: 16px 20px; background: #111118; border: 1px solid #1e1e2a; border-radius: 8px; font-size: 13px; color: #8a857a; line-height: 1.7; }
+.info strong { color: #e8e4dd; }
+</style>
+</head>
+<body>
+<div class="lang-bar">
+  <h1>Motion<span>Print</span></h1>
+  <span style="flex:1"></span>
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+</div>
+<div class="subtitle" id="subtitle">Daily mouse fingerprint — 3 rendering themes</div>
+<div class="gallery">
+  <div class="card">
+    <div class="card-header">🌋 Terrain</div>
+    <canvas id="demo-terrain" data-label="Terrain"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-header">🖌️ Ink Wash</div>
+    <canvas id="demo-ink" data-label="Ink Wash"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-header">💡 Neon</div>
+    <canvas id="demo-neon" data-label="Neon"></canvas>
+  </div>
+</div>
+<div class="info" id="info">
+  <strong>MotionPrint</strong> — Record your mouse movements throughout the day, and each night a unique generative artwork is born from your digital footprint.<br><br>
+  <strong>Features:</strong> 24/7 background recording · System tray · 3 artistic themes · Calendar gallery · High-res PNG export · Chinese/English · Auto-start on boot · 100% local — no network requests
+</div>
+
+<script>
+// ---- Mock data generator ----
+function generateMockData(seed) {
+  const rng = mulberry32(seed);
+  const samples = [];
+  let x = rng() * 1920;
+  let y = rng() * 1080;
+  const numMoves = 300 + Math.floor(rng() * 200);
+
+  // Random walk with clusters
+  const clusters = 3 + Math.floor(rng() * 3);
+  const clusterCenters = [];
+  for (let c = 0; c < clusters; c++) {
+    clusterCenters.push({ cx: rng() * 1920, cy: rng() * 1080 });
+  }
+
+  for (let i = 0; i < numMoves; i++) {
+    // Every so often, move toward a cluster center
+    if (i % 50 < 10) {
+      const center = clusterCenters[i % clusterCenters.length];
+      x += (center.cx - x) * 0.1 + (rng() - 0.5) * 80;
+      y += (center.cy - y) * 0.1 + (rng() - 0.5) * 80;
+    } else {
+      x += (rng() - 0.5) * 60;
+      y += (rng() - 0.5) * 60;
+    }
+    x = Math.max(0, Math.min(1920, x));
+    y = Math.max(0, Math.min(1080, y));
+
+    samples.push({ t: i * 100, x: Math.round(x), y: Math.round(y), type: 'move' });
+
+    // Add occasional clicks
+    if (rng() < 0.02) {
+      samples.push({ t: i * 100 + 1, x: Math.round(x), y: Math.round(y), type: 'click', btn: 'left' });
+    }
+    // Add occasional scrolls
+    if (rng() < 0.015) {
+      samples.push({ t: i * 100 + 2, x: Math.round(x), y: Math.round(y), type: 'scroll', delta: Math.floor(rng() * 3 - 1) });
+    }
+  }
+
+  // Generate palette
+  const hash = hashString('2026-06-' + String(10 + (seed % 20)).padStart(2,'0'));
+  const rand = mulberry32(hash);
+  const baseHue = Math.floor(rand() * 360);
+  const colors = [];
+  for (let i = 0; i < 12; i++) {
+    const hue = (baseHue + i * 30 + Math.floor(rand() * 20)) % 360;
+    const sat = 0.5 + rand() * 0.5;
+    const lit = 0.4 + rand() * 0.4;
+    colors.push(hslToHex(hue, sat, lit));
+  }
+  const palette = {
+    background: '#0d1117',
+    primary: colors[0], secondary: colors[3], accent: colors[7],
+    surface: '#161b22', text: '#e6edf3', colors
+  };
+
+  return { samples, palette };
+}
+
+// ---- PRNG ----
+function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function hashString(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h >>> 0; }
+
+function hslToHex(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+  return `#${[f(0),f(8),f(4)].map(v => Math.round(v*255).toString(16).padStart(2,'0')).join('')}`;
+}
+
+// ---- Normalize to canvas ----
+function normalize(samples, w, h, pad) {
+  pad = pad || 40;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const s of samples) {
+    if (s.x < minX) minX = s.x; if (s.y < minY) minY = s.y;
+    if (s.x > maxX) maxX = s.x; if (s.y > maxY) maxY = s.y;
+  }
+  const dw = maxX - minX || 1, dh = maxY - minY || 1;
+  const cw = w - pad * 2, ch = h - pad * 2;
+  const scale = Math.min(cw / dw, ch / dh);
+  return samples.map(s => ({ ...s, x: (s.x - minX) * scale + pad + (cw - dw * scale) / 2, y: (s.y - minY) * scale + pad + (ch - dh * scale) / 2 }));
+}
+
+function dist(x1,y1,x2,y2) { return Math.hypot(x2-x1,y2-y1); }
+
+// ---- Renderers ----
+
+function renderTerrain(c, data, palette, w, h) {
+  c.fillStyle = '#0d1117'; c.fillRect(0, 0, w, h);
+  const moves = data.filter(s => s.type === 'move');
+  const norm = normalize(moves, w, h, 20);
+  const gs = 8, cols = Math.ceil(w/gs), rows = Math.ceil(h/gs);
+  const grid = new Float64Array(cols * rows);
+  for (const p of norm) {
+    const col = Math.floor(p.x/gs), row = Math.floor(p.y/gs);
+    if (col >= 0 && col < cols && row >= 0 && row < rows) grid[row*cols+col]++;
+  }
+  let maxVal = 0; for (let i = 0; i < grid.length; i++) if (grid[i] > maxVal) maxVal = grid[i];
+  if (maxVal === 0) maxVal = 1;
+  for (let r = 0; r < rows; r++) for (let col = 0; col < cols; col++) {
+    const val = grid[r*cols+col] / maxVal;
+    if (val === 0) continue;
+    const idx = Math.floor(val * (palette.colors.length - 1));
+    c.fillStyle = palette.colors[idx]; c.globalAlpha = 0.1 + val * 0.7;
+    c.fillRect(col*gs, r*gs, gs, gs);
+  }
+  c.globalAlpha = 1;
+  if (norm.length > 1) {
+    c.strokeStyle = palette.text; c.lineWidth = 0.5; c.globalAlpha = 0.15; c.beginPath(); c.moveTo(norm[0].x, norm[0].y);
+    for (let i = 1; i < norm.length; i++) c.lineTo(norm[i].x, norm[i].y); c.stroke(); c.globalAlpha = 1;
+  }
+  data.filter(s=>s.type==='click').forEach(click => {
+    const pts = normalize([click], w, h, 20);
+    if (pts.length === 0) return;
+    const g = c.createRadialGradient(pts[0].x, pts[0].y, 0, pts[0].x, pts[0].y, 12);
+    g.addColorStop(0, palette.accent); g.addColorStop(1, 'transparent');
+    c.fillStyle = g; c.globalAlpha = 0.6; c.beginPath(); c.arc(pts[0].x, pts[0].y, 12, 0, Math.PI*2); c.fill(); c.globalAlpha = 1;
+  });
+}
+
+function renderInk(c, data, palette, w, h) {
+  c.fillStyle = '#0d1117'; c.fillRect(0, 0, w, h);
+  const moves = data.filter(s => s.type === 'move');
+  if (moves.length < 2) return;
+  const norm = normalize(moves, w, h);
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  for (let i = 1; i < norm.length; i++) {
+    const sp = i > 0 ? 1 - Math.min(dist(norm[i-1].x, norm[i-1].y, norm[i].x, norm[i].y) * 0.02, 0.9) : 0.5;
+    const lw = 1 + sp * 6;
+    c.strokeStyle = palette.primary; c.globalAlpha = 0.05 + (1-sp) * 0.4; c.lineWidth = lw;
+    c.beginPath(); c.moveTo(norm[i-1].x, norm[i-1].y); c.lineTo(norm[i].x, norm[i].y); c.stroke();
+  }
+  c.globalAlpha = 1;
+  data.filter(s=>s.type==='click').forEach(click => {
+    const p = normalize([click], w, h);
+    if (p.length === 0) return;
+    c.fillStyle = palette.accent; c.globalAlpha = 0.7;
+    c.beginPath(); c.arc(p[0].x, p[0].y, 3, 0, Math.PI*2); c.fill();
+    for (let s=0; s<5; s++) { const a=s/5*Math.PI*2; c.globalAlpha=0.4; c.beginPath(); c.arc(p[0].x+Math.cos(a)*(5+s%3*3), p[0].y+Math.sin(a)*(5+s%3*3), 1+s%2, 0, Math.PI*2); c.fill(); }
+  }); c.globalAlpha = 1;
+}
+
+function renderNeon(c, data, palette, w, h) {
+  const g = c.createLinearGradient(0,0,0,h); g.addColorStop(0,'#0a0a0f'); g.addColorStop(1,'#0d0d1a'); c.fillStyle=g; c.fillRect(0,0,w,h);
+  const moves = data.filter(s=>s.type==='move');
+  if (moves.length<2) return;
+  const norm = normalize(moves, w, h);
+  c.lineCap='round'; c.lineJoin='round';
+  // Glow pass
+  for (let i=1;i<norm.length;i++) {
+    const speedNorm = Math.min(dist(norm[i-1].x,norm[i-1].y,norm[i].x,norm[i].y)*2,1);
+    const idx = Math.floor(speedNorm*(palette.colors.length-1));
+    c.strokeStyle=palette.colors[idx]; c.globalAlpha=0.15; c.lineWidth=6;
+    c.beginPath(); c.moveTo(norm[i-1].x,norm[i-1].y); c.lineTo(norm[i].x,norm[i].y); c.stroke();
+  }
+  // Core pass
+  for (let i=1;i<norm.length;i++) {
+    c.strokeStyle='#ffffff'; c.globalAlpha=0.5; c.lineWidth=1;
+    c.beginPath(); c.moveTo(norm[i-1].x,norm[i-1].y); c.lineTo(norm[i].x,norm[i].y); c.stroke();
+  }
+  c.globalAlpha=1;
+}
+
+// ---- Main render ----
+function renderAll() {
+  const data1 = generateMockData(42);
+  const data2 = generateMockData(42);
+  const data3 = generateMockData(42);
+
+  ['terrain','ink','neon'].forEach((theme, idx) => {
+    const canvas = document.getElementById('demo-' + theme);
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const w = 800, h = Math.round(w * 9 / 16);
+    canvas.width = w * 2; canvas.height = h * 2;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    const c = canvas.getContext('2d');
+    c.scale(2, 2);
+    const data = idx === 0 ? data1 : data2;
+    if (theme === 'terrain') renderTerrain(c, data.samples, data.palette, w, h);
+    else if (theme === 'ink') renderInk(c, data.samples, data.palette, w, h);
+    else renderNeon(c, data.samples, data.palette, w, h);
+
+    // Gold frame overlay
+    c.strokeStyle = 'rgba(201,169,110,0.25)'; c.lineWidth = 2; c.strokeRect(1, 1, w-2, h-2);
+  });
+}
+
+// ---- Lang switch ----
+function setLang(lang) {
+  document.getElementById('btn-en').className = 'lang-btn' + (lang === 'en' ? ' active' : '');
+  document.getElementById('btn-zh').className = 'lang-btn' + (lang === 'zh' ? ' active' : '');
+  if (lang === 'zh') {
+    document.getElementById('subtitle').textContent = '每日鼠标指纹 — 3 种渲染主题';
+    document.getElementById('info').innerHTML = '<strong>MotionPrint</strong> — 记录你一天中的鼠标移动，每晚生成一幅独一无二的数字艺术作品。<br><br><strong>特性：</strong> 7×24 后台记录 · 系统托盘 · 3 种艺术主题 · 日历画廊 · 高清 PNG 导出 · 中英文切换 · 开机自启 · 100% 本地运行 — 不发起任何网络请求';
+  } else {
+    document.getElementById('subtitle').textContent = 'Daily mouse fingerprint — 3 rendering themes';
+    document.getElementById('info').innerHTML = '<strong>MotionPrint</strong> — Record your mouse movements throughout the day, and each night a unique generative artwork is born from your digital footprint.<br><br><strong>Features:</strong> 24/7 background recording · System tray · 3 artistic themes · Calendar gallery · High-res PNG export · Chinese/English · Auto-start on boot · 100% local — no network requests';
+  }
+}
+
+window.onload = function() {
+  setTimeout(renderAll, 100);
+};
+</script>
+</body>
+</html>
