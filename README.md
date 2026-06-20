@@ -4,15 +4,25 @@
 
 > **中文版本：[README.zh.md](README.zh.md)**
 
-MotionPrint runs quietly in your system tray, recording mouse position, clicks, and scrolls. At the end of each day, it transforms your activity into a unique piece of generative art. Think of it as a personal "mouse canvas" — every day produces a different fingerprint.
+MotionPrint runs quietly in your system tray, recording mouse position, clicks, and scrolls. Every day, it transforms your activity into a unique piece of generative art — like a personal "mouse canvas" that produces a different fingerprint each day.
 
-<p align="center">
-  <img src="assets/screenshots/demo-terrain.png" width="280" alt="Terrain Theme" />
-  <img src="assets/screenshots/demo-ink.png" width="280" alt="Ink Wash Theme" />
-  <img src="assets/screenshots/demo-neon.png" width="280" alt="Neon Theme" />
-  <br>
-  <em>Terrain · Ink Wash · Neon — three artistic themes</em>
-</p>
+---
+
+## Quick Download & Usage
+
+**[⬇ Download MotionPrint v1.0.0](https://github.com/zhouder/motionprint/releases/download/v1.0.0/MotionPrint-1.0.0-win.zip)** (107 MB, Windows x64)
+
+1. **Download** the zip file from the link above
+2. **Extract** the zip to any folder
+3. **Double-click** `MotionPrint.exe` to launch
+4. The app starts minimized to the **system tray** (bottom-right taskbar area)
+5. Click the tray icon to open the window — recording begins automatically
+6. Press **Ctrl + Shift + M** to show/hide the window at any time
+7. Enable **auto-start on boot** in Settings
+
+**No installation required** — just extract and run. All data stays local on your machine.
+
+For older releases, visit the [Releases page](https://github.com/zhouder/motionprint/releases).
 
 ---
 
@@ -47,10 +57,10 @@ On first launch, MotionPrint shows a clear privacy notice explaining exactly wha
 
 ## Installation
 
-### Windows (Recommended)
-Download the latest installer from [Releases](https://github.com/your-org/motionprint/releases):
+### Download
+Download the latest version from the [Releases page](https://github.com/zhouder/motionprint/releases):
 
-- `MotionPrint-Setup-1.0.0.exe` — Standard installer (NSIS)
+- **`MotionPrint-1.0.0-win.zip`** — Portable version (extract and run, no installation needed)
 
 ### From Source
 ```bash
@@ -97,7 +107,7 @@ motionprint/
 │   │   └── index.ts       # contextBridge API
 │   ├── renderer/         # React app
 │   │   ├── components/    # UI components
-│   │   ├── renderers/     # 5 rendering themes
+│   │   ├── renderers/     # 3 rendering themes
 │   │   ├── hooks/         # React hooks
 │   │   ├── utils/         # Palette generation, export
 │   │   └── styles/        # Global CSS
@@ -123,12 +133,10 @@ motionprint/
 
 ## Features
 
-### 5 Rendering Themes
-1. **Streamline** — Mouse paths as flowing lines. Speed determines line width and color.
-2. **Starmap** — Activity points as stars. Clicks create bright starbursts.
-3. **Terrain** — Movement frequency creates a topographic heatmap.
-4. **Ink Wash** — Traditional ink brush style. Stays create dark ink pools.
-5. **Neon** — Dark cyberpunk aesthetic with glowing neon tubes.
+### 3 Rendering Themes
+1. **Terrain** — Movement frequency creates a topographic heatmap.
+2. **Ink Wash** — Traditional ink brush style. Stays create dark ink pools.
+3. **Neon** — Dark cyberpunk aesthetic with glowing neon tubes.
 
 ### System Tray
 - Start / Pause / Stop recording from the tray menu
@@ -173,19 +181,3 @@ motionprint/
 ## License
 
 MIT
-
----
-
-## Screenshots
-
-Place screenshots in `assets/screenshots/`:
-- `live-preview.png` — Today's live preview with stats
-- `gallery.png` — Calendar gallery view
-- `streamline.png` — Streamline theme example
-- `starmap.png` — Starmap theme example
-- `terrain.png` — Terrain theme example
-- `ink.png` — Ink Wash theme example
-- `neon.png` — Neon theme example
-- `privacy-notice.png` — First-run privacy notice
-- `settings.png` — Settings page
-- `tray-menu.png` — System tray menu
