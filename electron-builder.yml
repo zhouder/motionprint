@@ -1,0 +1,28 @@
+appId: com.motionprint.app
+productName: MotionPrint
+copyright: Copyright 2026 MotionPrint
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+  - assets/**/*
+
+npmRebuild: false
+
+win:
+  target:
+    - target: zip
+      arch:
+        - x64
+  icon: assets/icon.png
+  signAndEditExecutable: false
+
+extraResources:
+  - from: assets/
+    to: assets/
+    filter:
+      - "*.png"
+      - "*.ico"

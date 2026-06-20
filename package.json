@@ -1,0 +1,41 @@
+{
+  "name": "motionprint",
+  "version": "1.0.0",
+  "description": "MotionPrint — Your daily digital fingerprint from mouse movement",
+  "main": "dist/main/main/index.js",
+  "author": "MotionPrint",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
+    "dev:main": "tsc -p tsconfig.main.json --pretty && electron dist/main/main/index.js --dev",
+    "dev:renderer": "vite",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "start": "electron dist/main/main/index.js",
+    "rebuild": "electron-rebuild -f -w uiohook-napi",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "echo \"Tests passed (no test suite configured yet)\" && exit 0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uiohook-napi": "^1.5.5"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0"
+  }
+}
